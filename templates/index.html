@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GitHub Profile Finder</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>GitHub Profile Finder</h1>
+        <p>Search any GitHub user by username.</p>
+
+        <form method="POST" id="searchForm">
+            <input
+                type="text"
+                name="username"
+                placeholder="Enter GitHub username"
+                required
+            >
+
+            <button type="submit">Search</button>
+        </form>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Fetching GitHub profile...</p>
+        </div>
+
+        {% if error %}
+        <div class="error">
+            <strong>⚠️ {{ error }}</strong>
+
+            {% if error == "GitHub user not found!" %}
+                <p>Please check the username and try again.</p>
+
+            {% elif error == "API access forbidden or rate limit exceeded!" %}
+                <p>GitHub API limit may have been reached. Please try again later.</p>
+            
+            {% elif error == "Network error. Please check your internet connection." %}
+                <p>Unable to connect to GitHub. Check your internet connection and try again.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+        {% if user %}
+
+            <div class="profile">
+
+                <img src="{{ user.avatar_url }}" alt="Profile picture">
+
+                <h2>{{ user.name or user.login }}</h2>
+
+                <p>@{{ user.login }}</p>
+
+                <p>{{ user.bio or "No biography available" }}</p>
+
+                <p>Location: {{ user.location or "Not specified" }}</p>
+
+                <div class="stats">
+                    <span>Followers: {{ user.followers }}</span>
+                    <span>Following: {{ user.following }}</span>
+                    <span>Repositories: {{ user.public_repos }}</span>
+                </div>
+
+                <a href="{{ user.html_url }}" target="_blank" rel="noopener noreferrer">
+                    View GitHub Profile
+                </a>
+
+            </div>
+
+            <!-- Repository Language Statistics -->
+
+            {% if language_stats %}
+
+                <div class="language-stats">
+
+                    <h2>Programming Languages</h2>
+
+                    {% for language, percentage in language_stats.items() %}
+
+                        <div class="language-item">
+
+                            <div class="language-info">
+                                <span>{{ language }}</span>
+                                <span>{{ percentage }}%</span>
+                            </div>
+
+                            <div class="language-bar">
+                                <div class="language-fill"
+                                    style="width: {{ percentage }}%;">
+                                </div>
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+            {% if repos %}
+            <h2>Public Repositories</h2>
+            <div class="repo-controls">
+                <select id="repoSort">
+                    <option value="stars">Most Stars</option>
+                    <option value="updated">Recently Updated</option>
+                    <option value="forks">Most Forks</option>
+                </select>
+            </div>
+            <div class="repo-search">
+                <input
+                    type="text"
+                    id="repoSearch"
+                    placeholder="Search repositories by name or language..."
+                >
+            </div>
+        {% endif %}
+
+            <div class="repositories" id="repoContainer">
+
+                {% for repo in repos %}
+
+                    <div class="repo-card"
+                    data-updated="{{ repo.updated_at }}"
+                    data-description="{{ repo.description or 'No description available' }}"
+                    data-stars="{{ repo.stargazers_count }}"
+                    data-forks="{{ repo.forks_count }}"
+                    data-issues="{{ repo.open_issues_count }}"
+                    data-language="{{ repo.language or 'Not specified' }}"
+                    data-created="{{ repo.created_at }}"
+                    data-branch="{{ repo.default_branch }}"
+                    data-url="{{ repo.html_url }}">
+
+                        <h3>{{ repo.name }}</h3>
+
+                        <p>Language: {{ repo.language or "Not specified" }}</p>
+
+                        <p>Stars: {{ repo.stargazers_count }}</p>
+
+                        <p>Forks: {{ repo.forks_count }}</p>
+
+                        <a href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer">
+                            View Repository
+                        </a>
+
+                    </div>
+
+                {% else %}
+
+                    <p>No public repositories found.</p>
+
+                {% endfor %}
+
+            </div>
+            {% if repos %}
+            <button id="loadMoreBtn"
+                    data-username="{{ user.login }}"
+                    style="display: none;">
+                Load More Repositories
+            </button>
+            {% endif %}
+            {% endif %}
+        </div>
+    <!-- Repository Details Popup -->
+    <div id="repoModal" class="repo-modal">
+
+        <div class="modal-content">
+
+            <span id="closeModal" class="close-modal">&times;</span>
+
+            <h2 id="modalRepoName"></h2>
+
+            <p id="modalDescription"></p>
+
+            <div id="modalDetails"></div>
+
+            <a id="modalRepoLink" href="#" target="_blank" rel="noopener noreferrer">
+                View Repository on GitHub
+            </a>
+
+        </div>
+
+    </div>
+     <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
